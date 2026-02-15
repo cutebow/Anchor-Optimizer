@@ -5,51 +5,99 @@ download it on modrinth
 All rights reserved unless explicitly stated.
 No permission is granted to use, copy, modify, or distribute this project or its source code without prior written consent from the author.
 
-# Code Explained 
+# Code Explained
+
 
 # ClientSideAnchors.java
 
-It boots the mod on the client, loads the config, and runs the mod’s ticking logic every tick.
-It doesn’t touch gameplay, it just makes sure the prediction manager and intro message logic get time to run.
+This is basically the startup one. When you load into the game it loads your config, then it runs the prediction system every tick so it can expire old predictions and keep everything from getting stuck.
+
+You’ll mostly see:
+ClientSideAnchorsConfig.load();
+ClientTickEvents.END_CLIENT_TICK.register(client -> AnchorPredictionManager.tick());
+
+it’s just keeping the mod alive and updating.
+
+---
 
 # AnchorPredictionManager.java
 
-This is the core logic.
-It watches for you right clicking a respawn anchor, and if it’s charged and you aren’t holding glowstone, it does a temporary client-only visual prediction by setting the block to air on your screen.
-It also tracks the positions it predicted so it can hold that visual state briefly and then stop once the server confirms the real result.
+This is the main part.
 
-# ClientSideAnchorsIntro.java
+It watches for your right-click on a anchor, and if it’s the kind of click that would explode it, it does a quick client-side “pretend it already exploded” so you don’t have to wait for the server to catch up.
 
-This just shows a one-time chat message in-game the first time the mod runs, then marks introShown in the config so it won’t spam again.
-No gameplay logic, just a one-time message.
+First it checks a bunch of stuff so it only triggers in the right scenario:
+if (!cfg.enabled) return;
+if (!cfg.instantExplosion) return;
+if (mc.player.isSneaking()) return;
+if (world.getRegistryKey().equals(World.NETHER)) return;
 
-# ClientSideAnchorsConfig.java
+So it won’t run if the mod is off, if instant mode is off, if you’re crouching, or if you’re in the Nether (because anchors don’t explode there).
 
-This loads and saves the config file in your .minecraft/config folder.
-It stores toggles like enabled, instantExplosion visuals, hideGlowstoneRing, swingHandOnUse, and hurtCamFromAnchor.
+Then it makes sure you’re actually clicking a charged anchor and not filling it:
+if (!(state.getBlock() instanceof RespawnAnchorBlock)) return;
+if (charges <= 0) return;
+if (stack.isOf(Items.GLOWSTONE)) return;
 
-# ClientSideAnchorsConfigScreen.java
+That glowstone check is important because glowstone is “charge it”, not “detonate it”.
 
-This builds the YACL config screen.
-It’s just the UI that lets you toggle the settings in-game, nothing related to anchors themselves.
+Then the actual instant visual part is literally swapping it to air on your client
+BlockState predicted = Blocks.AIR.getDefaultState();
+world.setBlockState(key, predicted, 0);
 
-# ClientSideAnchorsModMenuIntegration.java
+That’s the whole thing. its not touching the server. its just making your screen show what you expect to happen.
 
-This connects Mod Menu to the YACL config screen so when you click the mod in Mod Menu, it opens the config UI.
-mod menu integration.
+The reason it doesn’t flicker back is because the server sometimes sends a temporary “still there” update before it sends the final result. This code basically goes “cool, I’m gonna remember what the server said, but I’m keeping it as air for a moment so it doesn’t pop back in.”
+
+And it has a hard timeout too (40 ticks) so even if something gets weird or broken, itll stop predicting and go back to what the server last told it.
+
+---
+
+# BlockStateCollisionMixin.java
+
+This part is why you don’t fall through the spot even though it’s air.
+
+It checks: “is this block air right now, and is it one of our predicted positions?” If yes, it borrows the old anchor’s collision shape.
+
+So visually it’s gone, but your movement still treats it like there’s something solid there for that short prediction window, this is good for not giving an advtantage.
+
+---
 
 # ClientPlayerInteractionManagerMixin.java
 
-This listens for the client “interactBlock” call when you right click a block.
-It grabs the clicked block position and calls the prediction manager so the mod can do its client-side visual prediction right when you click.
+This is how it tells you clicked.
+
+It hooks into the client’s interactBlock call and immediately runs:
+AnchorPredictionManager.handleInteract(world, hand, hitResult);
+
+So the prediction happens right as you click, not later like normally.
+
+---
 
 # ClientPlayNetworkHandlerMixin.java
 
-This listens for server block update packets like BlockUpdateS2CPacket and ChunkDeltaUpdateS2CPacket.
-Then it uses those updates to decide “ok the server confirmed what actually happened, so I can stop my temporary client-side prediction and clear my tracking.”
+this one listens to the server.
+
+When the server sends block update packets, this mixin forwards them into:
+AnchorPredictionManager.onServerBlockUpdate(world, pos, state);
+
+So when the server finally confirms that its gone (AIR), the prediction ends normally.
+
+---
 
 # ClientWorldSetBlockStateMixin.java
 
-This is the anti-flicker/compatibility piece.
-It prevents the client from temporarily showing certain unwanted block states while a prediction is active, so you don’t see the anchor pop back for a split second.
-It also ignores a specific “fake anchor” block id from Hero’s Anchor Optimizer so it doesn’t visually conflict so you can have both installed while still keeping the visuals working, anchors still handled like normal.
+This is the anti-flash protection thingy.
+
+While a position is being predicted, if something tries to set it back to a real block, it gets ignored. But if its air, that’s allowed (because air is the server confirming the explosion).
+
+So it’s basically “don’t let the anchor come back into view while we’re waiting for the server.”
+
+---
+
+# Why it’s not a cheat
+
+Because the server is still the boss ceo type thingy. This mod can’t force an explosion, cant add damage, can’t change knockback, cant make placements actually happen faster server-side.
+
+All it does is change what YOUR client shows for a second while the server packets are catching up.
+
