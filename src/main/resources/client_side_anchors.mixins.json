@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "me.cutebow.client_side_anchors.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientPlayerInteractionManagerMixin",
+    "ClientPlayNetworkHandlerMixin",
+    "ClientWorldSetBlockStateMixin",
+    "BlockStateCollisionMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

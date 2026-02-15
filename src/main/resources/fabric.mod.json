@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "client_side_anchors",
+  "version": "${minecraft_version}",
+  "name": "Anchor Optimizer",
+  "description": "Instant client-side anchoring. Server remains authoritative - meaning to others it looks normal.",
+  "authors": ["cutebow"],
+  "license": "MIT",
+  "icon": "assets/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["me.cutebow.client_side_anchors.ClientSideAnchors"],
+    "modmenu": ["me.cutebow.client_side_anchors.config.ClientSideAnchorsModMenuIntegration"]
+  },
+  "mixins": ["client_side_anchors.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": ">=${minecraft_version}",
+    "fabric-api": "*",
+    "yet_another_config_lib_v3": ">=3.5.0"
+  },
+  "suggests": {
+    "modmenu": ">=11.0.0"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.modrinth": "https://modrinth.com/user/cutebow",
+        "modmenu.discord": "https://discord.gg/A2Nx9kxDeB"
+      }
+    }
+  }
+}
