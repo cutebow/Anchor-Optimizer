@@ -57,7 +57,7 @@ And it has a hard timeout too (40 ticks) so even if something gets weird or brok
 
 This part is why you don’t fall through the spot even though it’s air.
 
-It checks: “is this block air right now, and is it one of our predicted positions?” If yes, it borrows the old anchor’s collision shape.
+It checks if this block air right now, and is it one of the predicted positions If yes, it borrows the old anchor’s collision shape.
 
 So visually it’s gone, but your movement still treats it like there’s something solid there for that short prediction window, this is good for not giving an advtantage.
 
