@@ -47,7 +47,7 @@ world.setBlockState(key, predicted, 0);
 
 That’s the whole thing. its not touching the server. its just making your screen show what you expect to happen.
 
-The reason it doesn’t flicker back is because the server sometimes sends a temporary “still there” update before it sends the final result. This code basically goes “cool, I’m gonna remember what the server said, but I’m keeping it as air for a moment so it doesn’t pop back in.”
+The reason it doesn’t flicker back is because the server sometimes sends a temporary “still there” update before it sends the final result.
 
 And it has a hard timeout too (40 ticks) so even if something gets weird or broken, itll stop predicting and go back to what the server last told it.
 
