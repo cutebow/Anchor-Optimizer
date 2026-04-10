@@ -5,7 +5,7 @@
   "name": "Anchor Optimizer",
   "description": "Instant client-side anchoring. Server remains authoritative - meaning to others it looks normal.",
   "authors": ["cutebow"],
-  "license": "MIT",
+  "license": "All Rights Reserved",
   "icon": "assets/icon.png",
   "environment": "client",
   "entrypoints": {
