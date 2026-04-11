@@ -58,6 +58,15 @@ tasks.processResources {
 tasks.jar {
     archiveBaseName.set(project.archives_base_name)
     archiveVersion.set(project.minecraft_version)
+    manifest {
+        attributes(
+                "Implementation-Title": "AnchorOptimizer",
+                "Implementation-Vendor": "cutebow",
+                "Anchor-Node": "n7-a7f9b2c1",
+                "Anchor-Seal": "s4-c2a91d3b",
+                "Anchor-Mesh": "m3-4d1e8aa6"
+        )
+    }
 }
 
 tasks.remapJar {
