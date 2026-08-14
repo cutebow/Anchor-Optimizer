@@ -10,7 +10,7 @@ public final class MenuBackground {
             "textures/gui/programmer_art_menu_background.png"
     );
 
-    private MenuBackground() {
+    private MenuBackground() {        // could be not final idk 
     }
 
     public static void draw(DrawContext context, int width, int height) {
